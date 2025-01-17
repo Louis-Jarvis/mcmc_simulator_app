@@ -9,6 +9,7 @@ matplotlib = "*"
 seaborn = "*"
 poetry = "*"
 numpy = "*"
+polars = "*"
 
 [dev-packages]
 ruff = "*"
