@@ -1,9 +1,12 @@
 import streamlit as st
 import numpy as np
-import time
 import matplotlib.pyplot as plt
 import seaborn as sns
 import logging
+
+import pathlib
+
+from src.text import PROBLEM_DESCRIPTION, PROPOSAL_DISTRIBUTION_TEXT
 
 NUM_ITERATIONS = 100
 
@@ -58,17 +61,16 @@ with st.sidebar:
 # Define the main content
 ##############################################  
 
-st.markdown(
-"""
+#TODO tidy all this
+col1, col2 = st.columns(2)
 
-$$
-\hat{Y} = aX + b + \epsilon
-$$
+with col1:
+    st.markdown(PROBLEM_DESCRIPTION)
 
-$$
-Y | X \sim N(aX + b, \sigma^2)
-$$
-""")
+with col2:
+    st.image(pathlib.Path("assets") / "synthetic_data.png")
+
+st.markdown(PROPOSAL_DISTRIBUTION_TEXT)
 
 col1, col2, col3 = st.columns(3)
 
