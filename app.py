@@ -15,6 +15,22 @@ logger = logging.getLogger(__name__)
 
 sns.set_theme(style="darkgrid")
 
+def generate_trace_plots(x, y, idx, element):
+    trace_fig, trace_ax = plt.subplots()
+    sns.lineplot(x=x[:idx], y=y[:idx], ax=trace_ax)
+    element.pyplot(trace_fig)
+
+def generate_hist_plots(y, idx, element):
+    fig, ax = plt.subplots()
+    sns.histplot(y[:idx], ax=ax)
+    element.pyplot(fig)
+
+# def reset_plots(trace_plots, hist_plots):
+#     for plot in trace_plots:
+#         plot.empty()
+#     for plot in hist_plots:
+#         plot.empty()
+
 #TODO eventually get rid of this.
 x = np.linspace(0, 10, NUM_ITERATIONS)
 y = np.sin(x) + np.random.normal(0, 0.1, NUM_ITERATIONS)
@@ -24,13 +40,14 @@ if "running" not in st.session_state:
     st.session_state.idx = 0
 
 
-def _start_button():
+#TODO add dependency injection
+def start_button():
     st.session_state.running = True
 
-def _stop_button():
+def stop_button():
     st.session_state.running = False
 
-def _reset_button():
+def reset_button():
     st.session_state.running = False
     st.session_state.idx = 0
 
@@ -45,16 +62,16 @@ st.sidebar.title("Inputs")
 with st.sidebar:
 
     main_button = st.empty()
-    reset_button = st.empty()
+    reset_button_ = st.empty()
 
     if not st.session_state.running:
-        main_button.button("Start", on_click=_start_button)
+        main_button.button("Start", on_click=start_button)
     else:
-        main_button.button("Stop", on_click=_stop_button)
+        main_button.button("Stop", on_click=stop_button)
     
     if st.session_state.running or st.session_state.idx > 0:
         logger.debug("Reset button")
-        reset_button.button("Reset", on_click=_reset_button)
+        reset_button_.button("Reset", on_click=reset_button)
 
 
 ##############################################
@@ -78,6 +95,8 @@ with col1:
     #TODO turn each one of these columns into a function
     trace_plot_a = st.empty()
     hist_plot_a = st.empty()
+
+
 with col2:
     trace_plot_b = st.empty()
     hist_plot_b = st.empty()
@@ -85,32 +104,16 @@ with col3:
     trace_plot_c = st.empty()
     hist_plot_c = st.empty()
 
+# TODO parallelise
 if st.session_state.idx > 0:
+
+    generate_trace_plots(x, y, st.session_state.idx, trace_plot_a)
+    generate_trace_plots(x, y, st.session_state.idx, trace_plot_b)
+    generate_trace_plots(x, y, st.session_state.idx, trace_plot_c)
     
-    trace_fig_a, trace_ax_a = plt.subplots()
-    sns.lineplot(x=x[:st.session_state.idx], y=y[:st.session_state.idx], ax=trace_ax_a)
-    trace_plot_a.pyplot(trace_fig_a)
-    
-    trace_fig_b, trace_ax_b = plt.subplots()
-    sns.lineplot(x=x[:st.session_state.idx], y=y[:st.session_state.idx], ax=trace_ax_b)
-    trace_plot_b.pyplot(trace_fig_b)
-
-    trace_fig_c, trace_ax_c = plt.subplots()
-    sns.lineplot(x=x[:st.session_state.idx], y=y[:st.session_state.idx], ax=trace_ax_c)
-    trace_plot_c.pyplot(trace_fig_c)
-
-    #TODO make this a function
-    fig_a, ax_a = plt.subplots()
-    sns.histplot(y[:st.session_state.idx], ax=ax_a)
-    hist_plot_a.pyplot(fig_a)
-
-    fig_b, ax_b = plt.subplots()
-    sns.histplot(y[:st.session_state.idx], ax=ax_b)
-    hist_plot_b.pyplot(fig_b)
-
-    fig_c, ax_c = plt.subplots()
-    sns.histplot(y[:st.session_state.idx], ax=ax_c)
-    hist_plot_c.pyplot(fig_c)
+    generate_hist_plots(y, st.session_state.idx, hist_plot_a)
+    generate_hist_plots(y, st.session_state.idx, hist_plot_b)
+    generate_hist_plots(y, st.session_state.idx, hist_plot_c)
 
 #TODO run the animation here
 #TODO use this in parallel
@@ -120,29 +123,13 @@ with st.spinner("Running MCMC..."):
 
     while st.session_state.running and st.session_state.idx < NUM_ITERATIONS:
         
-        trace_fig_a, trace_ax_a = plt.subplots()
-        sns.lineplot(x=x[:st.session_state.idx], y=y[:st.session_state.idx], ax=trace_ax_a)
-        trace_plot_a.pyplot(trace_fig_a)
+        generate_trace_plots(x, y, st.session_state.idx, trace_plot_a)
+        generate_trace_plots(x, y, st.session_state.idx, trace_plot_b)
+        generate_trace_plots(x, y, st.session_state.idx, trace_plot_c)
 
-        trace_fig_b, trace_ax_b = plt.subplots()
-        sns.lineplot(x=x[:st.session_state.idx], y=y[:st.session_state.idx], ax=trace_ax_b)
-        trace_plot_b.pyplot(trace_fig_b)
-
-        trace_fig_c, trace_ax_c = plt.subplots()
-        sns.lineplot(x=x[:st.session_state.idx], y=y[:st.session_state.idx], ax=trace_ax_c)
-        trace_plot_c.pyplot(trace_fig_c)
-
-        fig_a, ax_a = plt.subplots()
-        sns.histplot(y[:st.session_state.idx], ax=ax_a)
-        hist_plot_a.pyplot(fig_a)
-
-        fig_b, ax_b = plt.subplots()
-        sns.histplot(y[:st.session_state.idx], ax=ax_b)
-        hist_plot_b.pyplot(fig_b)
-
-        fig_c, ax_c = plt.subplots()
-        sns.histplot(y[:st.session_state.idx], ax=ax_c)
-        hist_plot_c.pyplot(fig_c)
+        generate_hist_plots(y, st.session_state.idx, hist_plot_a)
+        generate_hist_plots(y, st.session_state.idx, hist_plot_b)
+        generate_hist_plots(y, st.session_state.idx, hist_plot_c)
         
         st.session_state.idx += 1
 
