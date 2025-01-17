@@ -15,6 +15,18 @@ logger = logging.getLogger(__name__)
 
 sns.set_theme(style="darkgrid")
 
+#TODO eventually get rid of this.
+x = np.linspace(0, 10, NUM_ITERATIONS)
+y = np.sin(x) + np.random.normal(0, 0.1, NUM_ITERATIONS)
+
+def empty_plot():
+    f, ax = plt.subplots()
+    ax.set_xlim(0, NUM_ITERATIONS)
+    ax.set_ylim(0, max(y)) #TODO tidy so its not messy
+
+    return st.pyplot(f)
+
+
 def generate_trace_plots(x, y, idx, element):
     trace_fig, trace_ax = plt.subplots()
     sns.lineplot(x=x[:idx], y=y[:idx], ax=trace_ax)
@@ -24,16 +36,6 @@ def generate_hist_plots(y, idx, element):
     fig, ax = plt.subplots()
     sns.histplot(y[:idx], ax=ax)
     element.pyplot(fig)
-
-# def reset_plots(trace_plots, hist_plots):
-#     for plot in trace_plots:
-#         plot.empty()
-#     for plot in hist_plots:
-#         plot.empty()
-
-#TODO eventually get rid of this.
-x = np.linspace(0, 10, NUM_ITERATIONS)
-y = np.sin(x) + np.random.normal(0, 0.1, NUM_ITERATIONS)
 
 if "running" not in st.session_state:
     st.session_state.running = False
@@ -93,16 +95,15 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     #TODO turn each one of these columns into a function
-    trace_plot_a = st.empty()
-    hist_plot_a = st.empty()
-
+    trace_plot_a = empty_plot()
+    hist_plot_a = empty_plot()
 
 with col2:
-    trace_plot_b = st.empty()
-    hist_plot_b = st.empty()
+    trace_plot_b = empty_plot()
+    hist_plot_b = empty_plot()
 with col3:
-    trace_plot_c = st.empty()
-    hist_plot_c = st.empty()
+    trace_plot_c = empty_plot()
+    hist_plot_c = empty_plot()
 
 # TODO parallelise
 if st.session_state.idx > 0:
@@ -118,7 +119,6 @@ if st.session_state.idx > 0:
 #TODO run the animation here
 #TODO use this in parallel
 #TODO refactor this to be a class
-
 with st.spinner("Running MCMC..."):
 
     while st.session_state.running and st.session_state.idx < NUM_ITERATIONS:
