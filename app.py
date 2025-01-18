@@ -1,9 +1,8 @@
 import streamlit as st
 import numpy as np
-import seaborn as sns
-import logging
 import pandas as pd
-
+import altair as alt
+import logging
 import pathlib
 
 from src.text import PROBLEM_DESCRIPTION, PROPOSAL_DISTRIBUTION_TEXT
@@ -12,8 +11,6 @@ NUM_ITERATIONS = 1000
 
 logging.basicConfig(level=logging.INFO)  # TODO change
 logger = logging.getLogger(__name__)
-
-sns.set_theme(style="darkgrid")
 
 # Generate data
 x = np.linspace(0, 10, NUM_ITERATIONS)
@@ -94,16 +91,28 @@ with st.spinner("Running MCMC..."):
         # Update the trace plot data
         update_trace_plot(x, y, i)
 
-        # Use st.line_chart to display the trace plot
-        trace_plot_a.line_chart(st.session_state.trace_data.set_index('x'))
+        # Create Altair line chart for the trace plot
+        trace_chart = alt.Chart(st.session_state.trace_data).mark_line(color='red').encode(
+            x='x',
+            y='y'
+        ).properties(title='Trace Plot')
+
+        # Display the Altair chart
+        trace_plot_a.altair_chart(trace_chart, use_container_width=True)
 
         # Update histogram data
         update_hist_plot(y, i)
 
-        # Use st.bar_chart to display the histogram as a bar chart
-        bar_chart_a.bar_chart(st.session_state.hist_data.set_index('Bins'))
-        bar_chart_b.bar_chart(st.session_state.hist_data.set_index('Bins'))
-        bar_chart_c.bar_chart(st.session_state.hist_data.set_index('Bins')) 
+        # Create Altair bar chart for the histogram
+        bar_chart = alt.Chart(st.session_state.hist_data).mark_bar().encode(
+            x=alt.X('Bins:Q', title='Bins'),
+            y=alt.Y('Counts:Q', title='Counts')
+        ).properties(title='Histogram')
+
+        # Display the Altair bar chart
+        bar_chart_a.altair_chart(bar_chart, use_container_width=True)
+        bar_chart_b.altair_chart(bar_chart, use_container_width=True)
+        bar_chart_c.altair_chart(bar_chart, use_container_width=True)
 
         st.session_state.idx += 1
 
