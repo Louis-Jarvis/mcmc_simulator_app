@@ -10,7 +10,7 @@ from src.text import PROBLEM_DESCRIPTION, PROPOSAL_DISTRIBUTION_TEXT
 
 NUM_ITERATIONS = 100
 
-logging.basicConfig(level=logging.DEBUG) #TODO change
+logging.basicConfig(level=logging.INFO) #TODO change
 logger = logging.getLogger(__name__)
 
 sns.set_theme(style="darkgrid")
@@ -19,14 +19,19 @@ sns.set_theme(style="darkgrid")
 x = np.linspace(0, 10, NUM_ITERATIONS)
 y = np.sin(x) + np.random.normal(0, 0.1, NUM_ITERATIONS)
 
-def generate_trace_plots(x, y, idx, ax):
-    ax.clear()
+def update_trace_plot(x, y, idx, ax):
     ax.set_xlim(0, 10)
-    sns.lineplot(x=x[:idx], y=y[:idx], ax=ax)  # Set x-limits
+    ax.plot(x[:idx], y[:idx])
+    #sns.lineplot(x=x[:idx], y=y[:idx], ax=ax)  # Set x-limits
 
-def generate_hist_plots(y, idx, ax):
-    ax.clear()
-    sns.histplot(y[:idx], ax=ax)
+def update_hist_plot(y, idx, ax):
+    #ax.clear()
+    ax.hist(y[:idx])
+
+def update_all_plots(idx):
+    update_trace_plot(x, y, idx, st.session_state.axs[0])
+    for j in range(1, 4):
+        update_hist_plot(y, idx, st.session_state.axs[j])
 
 # initialisation
 if "running" not in st.session_state:
@@ -111,22 +116,23 @@ st.markdown(PROPOSAL_DISTRIBUTION_TEXT)
 # Run the simulation and display the plots
 ############################################
 with st.container():
-    trace_plot_a = st.pyplot(st.session_state.plots)
+    trace_plot_a = st.empty()
 
 with st.spinner("Running MCMC..."):
 
-    while st.session_state.running and st.session_state.idx < NUM_ITERATIONS:
+    for i in range(0, NUM_ITERATIONS, 10):
+
+        if not st.session_state.running:
+            break
+
+        update_trace_plot(x, y, i, st.session_state.axs[0])
+
+        update_hist_plot(y, i, st.session_state.axs[1])
+        update_hist_plot(y, i, st.session_state.axs[2])
+        update_hist_plot(y, i, st.session_state.axs[3])
         
-        generate_trace_plots(x, y, st.session_state.idx, st.session_state.axs[0])
-
-
-        generate_hist_plots(y, st.session_state.idx, st.session_state.axs[1])
-        generate_hist_plots(y, st.session_state.idx, st.session_state.axs[2])
-        generate_hist_plots(y, st.session_state.idx, st.session_state.axs[3])
-        
-        st.session_state.idx += 1
-
-        trace_plot_a.pyplot(st.session_state.plots)
         plt.close()
+        trace_plot_a.pyplot(st.session_state.plots)
 
+        st.session_state.idx += 1
 
