@@ -6,6 +6,8 @@ The seaborn style was not available so it had to be applied manually.
 import altair as alt
 import pandas as pd  # Ensure pandas is imported
 
+import streamlit as st
+
 class SeabornPlotStyles:
     """Collection of colours used by seaborn styles."""
     BACKGROUND_COLOR = "#EAEAF2" # seaborn style, dark grey
@@ -48,3 +50,13 @@ def histogram_plot(data: pd.DataFrame, variable: str, title: str, bins: int = 10
     )
 
     return histogram
+
+def show_trace_plot() -> None:
+    return st.altair_chart(
+            altair_chart=trace_plot(st.session_state.trace_data), 
+            use_container_width=True)
+
+def show_histogram_plot(param: str) -> None:
+    return st.altair_chart(
+            altair_chart=histogram_plot(st.session_state.trace_data, param, param), 
+            use_container_width=True)

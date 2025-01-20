@@ -6,7 +6,7 @@ import pandas as pd
 import logging
 import pathlib
 
-from app.plots import trace_plot, histogram_plot
+from app import plots
 from app.text import PROBLEM_DESCRIPTION, PROPOSAL_DISTRIBUTION_TEXT
 
 NUM_ITERATIONS = 1000
@@ -36,6 +36,37 @@ def reset_button():
     st.session_state.idx = 0
     st.session_state.trace_data = pd.DataFrame({"x": [], "y": []})
 
+def run_animation() -> None:
+    
+    while st.session_state.idx < NUM_ITERATIONS:
+        if not st.session_state.running:
+            break
+
+        logger.debug(f"Iteration {st.session_state.idx}")
+
+        st.session_state.trace_data = pd.concat([
+            st.session_state.trace_data, 
+            pd.DataFrame(data={
+                "x": x[st.session_state.idx], 
+                "y": y[st.session_state.idx]
+                }, 
+                index=[st.session_state.idx])],
+                ignore_index=True)
+        
+        trace_chart = plots.trace_plot(st.session_state.trace_data)
+        trace_plot_a.altair_chart(trace_chart, use_container_width=True)
+
+        #TODO replace this with the actual plots
+        # # Create Altair histogram styled like Seaborn with no gaps between bars
+        histogram = plots.histogram_plot(st.session_state.trace_data, 'y', "y")
+
+        # # Display the Altair histogram
+        hist_a.altair_chart(histogram, use_container_width=True)
+        hist_b.altair_chart(histogram, use_container_width=True)
+        hist_sigma.altair_chart(histogram, use_container_width=True)
+
+        st.session_state.idx += 1
+
 # Sidebar controls
 st.title("Bayesian Linear Regression with MCMC")
 st.sidebar.title("Inputs")
@@ -55,62 +86,32 @@ with st.sidebar:
         reset_button_.button("Reset", on_click=reset_button)
 
 # Main content
-col1, col2 = st.columns(2)
+col_1, col_2 = st.columns(2)
 
-with col1:
+with col_1:
     st.markdown(PROBLEM_DESCRIPTION)
 
-with col2:
+with col_2:
     st.image(pathlib.Path("assets") / "synthetic_data.png")
 
 st.markdown(PROPOSAL_DISTRIBUTION_TEXT)
 
 # Run the simulation and display the plots
 with st.container():
-    trace_plot_a = st.altair_chart(trace_plot(st.session_state.trace_data), use_container_width=True)
+    trace_plot_a = plots.show_trace_plot()
     
 with st.container():
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        bar_chart_a = st.altair_chart(histogram_plot(st.session_state.trace_data, 'y', "y"), use_container_width=True)
-    with col2:
-        bar_chart_b = st.altair_chart(histogram_plot(st.session_state.trace_data, 'y', "y"), use_container_width=True)
+    col_1, col_2, col3 = st.columns(3)
+    with col_1:
+        hist_a = plots.show_histogram_plot('y')
+    with col_2:
+        hist_b = plots.show_histogram_plot('y')
     with col3:
-        bar_chart_c = st.altair_chart(histogram_plot(st.session_state.trace_data, 'y', "y"), use_container_width=True)
+        hist_sigma = plots.show_histogram_plot('y')
 
 # Logic for the simulation
 with st.spinner("Running MCMC..."):
-
-    while st.session_state.idx < NUM_ITERATIONS:
-        if not st.session_state.running:
-            break
-
-        logger.debug(f"Iteration {st.session_state.idx}")
-
-        st.session_state.trace_data = pd.concat([
-            st.session_state.trace_data, 
-            pd.DataFrame(data={
-                "x": x[st.session_state.idx], 
-                "y": y[st.session_state.idx]
-                }, 
-                index=[st.session_state.idx])],
-                ignore_index=True)
-        
-        trace_chart = trace_plot(st.session_state.trace_data)
-        trace_plot_a.altair_chart(trace_chart, use_container_width=True)
-
-        #TODO replace this with the actual plots
-        # # Create Altair histogram styled like Seaborn with no gaps between bars
-        histogram = histogram_plot(st.session_state.trace_data, 'y', "y")
-
-        # # Display the Altair histogram
-        bar_chart_a.altair_chart(histogram, use_container_width=True)
-        bar_chart_b.altair_chart(histogram, use_container_width=True)
-        bar_chart_c.altair_chart(histogram, use_container_width=True)
-
-
-
-        st.session_state.idx += 1
+    run_animation()
 
 # on animation end
 st.session_state.running = False
