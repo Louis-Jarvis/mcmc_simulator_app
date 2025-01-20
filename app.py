@@ -1,43 +1,45 @@
+"""Entrypoint for the application."""
+
 import streamlit as st
 import numpy as np
 import pandas as pd
-import altair as alt
 import logging
 import pathlib
 
+from src.plots import trace_plot, histogram_plot
 from src.text import PROBLEM_DESCRIPTION, PROPOSAL_DISTRIBUTION_TEXT
 
 NUM_ITERATIONS = 1000
-
-logging.basicConfig(level=logging.INFO)  # TODO change
-logger = logging.getLogger(__name__)
 
 # Generate data
 x = np.linspace(0, 10, NUM_ITERATIONS)
 y = np.sin(x) + np.random.normal(0, 0.1, NUM_ITERATIONS)
 
+logging.basicConfig(level=logging.INFO)  # TODO change
+logger = logging.getLogger(__name__)
+
 # Initialize the trace plot with an empty DataFrame
-if "trace_data" not in st.session_state:
-    st.session_state.trace_data = pd.DataFrame(columns=['x', 'y'])
-
-if "hist_data" not in st.session_state:
-    st.session_state.hist_data = pd.DataFrame(columns=['Bins', 'Counts'])
-
-def update_trace_plot(x, y, idx):
-    # Append new data to the existing DataFrame
-    new_data = pd.DataFrame({'x': x[:idx], 'y': y[:idx]})
-    st.session_state.trace_data = pd.concat([st.session_state.trace_data, new_data], ignore_index=True)
-
-def update_hist_plot(y, idx):
-    # Create a histogram and convert it to a DataFrame for bar chart
-    counts, bin_edges = np.histogram(y[:idx], bins=10)  # Adjust the number of bins as needed
-    hist_data = pd.DataFrame({'Bins': bin_edges[:-1], 'Counts': counts})
-    st.session_state.hist_data = hist_data
 
 # Initialization
 if "running" not in st.session_state:
     st.session_state.running = False
     st.session_state.idx = 0
+
+if "trace_data" not in st.session_state:
+    st.session_state.trace_data = pd.DataFrame({"x": [], "y": []})
+
+if "hist_data" not in st.session_state:
+    st.session_state.hist_data = pd.DataFrame(columns=['Bins', 'Counts'])
+
+def start_button():
+    st.session_state.running = True
+
+def stop_button():
+    st.session_state.running = False
+
+def reset_button():
+    st.session_state.idx = 0
+    st.session_state.trace_data = pd.DataFrame({"x": [], "y": []})
 
 # Sidebar controls
 st.title("Bayesian Linear Regression with MCMC")
@@ -47,15 +49,15 @@ with st.sidebar:
     main_button = st.empty()
     reset_button_ = st.empty()
 
-    if not st.session_state.running:
+    if not st.session_state.running and st.session_state.idx < NUM_ITERATIONS:
         logger.debug("Starting")
-        main_button.button("Start", on_click=lambda: setattr(st.session_state, 'running', True))
+        main_button.button("Start", on_click=start_button)
     else:
-        main_button.button("Stop", on_click=lambda: setattr(st.session_state, 'running', False))
+        main_button.button("Stop", on_click=stop_button)
     
-    if st.session_state.running or st.session_state.idx > 0:
+    if not st.session_state.running and st.session_state.idx > 0:
         logger.debug("Reset button")
-        reset_button_.button("Reset", on_click=lambda: setattr(st.session_state, 'idx', 0))
+        reset_button_.button("Reset", on_click=reset_button)
 
 # Main content
 col1, col2 = st.columns(2)
@@ -70,49 +72,50 @@ st.markdown(PROPOSAL_DISTRIBUTION_TEXT)
 
 # Run the simulation and display the plots
 with st.container():
-    trace_plot_a = st.empty()
-
+    trace_plot_a = st.altair_chart(trace_plot(st.session_state.trace_data), use_container_width=True)
+    
 with st.container():
     col1, col2, col3 = st.columns(3)
     with col1:
-        bar_chart_a = st.empty()
+        bar_chart_a = st.altair_chart(histogram_plot(st.session_state.trace_data, 'y', "y"), use_container_width=True)
     with col2:
-        bar_chart_b = st.empty()
+        bar_chart_b = st.altair_chart(histogram_plot(st.session_state.trace_data, 'y', "y"), use_container_width=True)
     with col3:
-        bar_chart_c = st.empty()
+        bar_chart_c = st.altair_chart(histogram_plot(st.session_state.trace_data, 'y', "y"), use_container_width=True)
 
+# Logic for the simulation
 with st.spinner("Running MCMC..."):
-    for i in range(0, NUM_ITERATIONS, 10):
+
+    while st.session_state.idx < NUM_ITERATIONS:
         if not st.session_state.running:
             break
 
-        logger.debug(f"Iteration {i}")
+        logger.debug(f"Iteration {st.session_state.idx}")
 
-        # Update the trace plot data
-        update_trace_plot(x, y, i)
-
-        # Create Altair line chart for the trace plot
-        trace_chart = alt.Chart(st.session_state.trace_data).mark_line(color='red').encode(
-            x='x',
-            y='y'
-        ).properties(title='Trace Plot')
-
-        # Display the Altair chart
+        st.session_state.trace_data = pd.concat([
+            st.session_state.trace_data, 
+            pd.DataFrame(data={
+                "x": x[st.session_state.idx], 
+                "y": y[st.session_state.idx]
+                }, 
+                index=[st.session_state.idx])],
+                ignore_index=True)
+        
+        trace_chart = trace_plot(st.session_state.trace_data)
         trace_plot_a.altair_chart(trace_chart, use_container_width=True)
 
-        # Update histogram data
-        update_hist_plot(y, i)
+        #TODO replace this with the actual plots
+        # # Create Altair histogram styled like Seaborn with no gaps between bars
+        histogram = histogram_plot(st.session_state.trace_data, 'y', "y")
 
-        # Create Altair bar chart for the histogram
-        bar_chart = alt.Chart(st.session_state.hist_data).mark_bar().encode(
-            x=alt.X('Bins:Q', title='Bins'),
-            y=alt.Y('Counts:Q', title='Counts')
-        ).properties(title='Histogram')
+        # # Display the Altair histogram
+        bar_chart_a.altair_chart(histogram, use_container_width=True)
+        bar_chart_b.altair_chart(histogram, use_container_width=True)
+        bar_chart_c.altair_chart(histogram, use_container_width=True)
 
-        # Display the Altair bar chart
-        bar_chart_a.altair_chart(bar_chart, use_container_width=True)
-        bar_chart_b.altair_chart(bar_chart, use_container_width=True)
-        bar_chart_c.altair_chart(bar_chart, use_container_width=True)
+
 
         st.session_state.idx += 1
+
+st.session_state.running = False
 
