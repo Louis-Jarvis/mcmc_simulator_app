@@ -12,5 +12,5 @@ pipenv install
 ## Usage:
 
 ```bash
-streamlit run app.py
+streamlit run main.py
 ```
