@@ -6,8 +6,8 @@ import pandas as pd
 import logging
 import pathlib
 
-from src.plots import trace_plot, histogram_plot
-from src.text import PROBLEM_DESCRIPTION, PROPOSAL_DISTRIBUTION_TEXT
+from app.plots import trace_plot, histogram_plot
+from app.text import PROBLEM_DESCRIPTION, PROPOSAL_DISTRIBUTION_TEXT
 
 NUM_ITERATIONS = 1000
 
@@ -18,8 +18,6 @@ y = np.sin(x) + np.random.normal(0, 0.1, NUM_ITERATIONS)
 logging.basicConfig(level=logging.INFO)  # TODO change
 logger = logging.getLogger(__name__)
 
-# Initialize the trace plot with an empty DataFrame
-
 # Initialization
 if "running" not in st.session_state:
     st.session_state.running = False
@@ -27,9 +25,6 @@ if "running" not in st.session_state:
 
 if "trace_data" not in st.session_state:
     st.session_state.trace_data = pd.DataFrame({"x": [], "y": []})
-
-if "hist_data" not in st.session_state:
-    st.session_state.hist_data = pd.DataFrame(columns=['Bins', 'Counts'])
 
 def start_button():
     st.session_state.running = True
@@ -117,5 +112,6 @@ with st.spinner("Running MCMC..."):
 
         st.session_state.idx += 1
 
+# on animation end
 st.session_state.running = False
 
