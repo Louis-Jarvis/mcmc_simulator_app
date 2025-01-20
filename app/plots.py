@@ -37,7 +37,7 @@ def histogram_plot(data: pd.DataFrame, variable: str, title: str, bins: int = 10
 
     histogram = alt.Chart(data).mark_bar(opacity=0.8, color='#81A1C1', binSpacing=0).encode(
         x=alt.X('y:Q', title=variable).bin(maxbins=bins),  # Changed to ordinal type for binned data
-        y="count()"
+        y=alt.Y("count()", title="Frequency")
     ).properties(title=f"Distribution of {title}").configure_view(
         fill=SeabornPlotStyles.BACKGROUND_COLOR  # Background color
     ).configure_axis(
