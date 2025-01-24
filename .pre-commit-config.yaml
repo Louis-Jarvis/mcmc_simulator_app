@@ -3,3 +3,4 @@ repos:
     rev: v0.9.2  # Use the latest version available
     hooks:
       - id: ruff
+        args: ["--exclude", "tests"]

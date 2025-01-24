@@ -45,24 +45,28 @@ def propose_theta(theta: np.ndarray, k: float) -> np.ndarray:
     
     return theta_prime
 
-def log_likelihood(data, theta):
+def log_likelihood(data: np.ndarray, theta: np.ndarray) -> np.ndarray[tuple[int, ...], np.dtype[np.float64]]    :
     """ 
-    Evaluate the likelhood of the data given a specific paramaeter vector.
+    Evaluate the likelhood of the data given a specific parameter vector.
     We are assuming the conditional distribution of the response Y|X is normal
     with mean a + b*X and variance sigma^2.
     """
 
+    xs = data[:,0]
+    ys = data[:,1]
+
     a,b,sigma = theta
+    
     # get the mean and variance of the conditional distribution
-    mean = a + b*data
+    mean = a + b*xs
     variance = sigma**2
 
     # we use the log-likeihood so that we are summing instead of multiplying
     # this is to avoid numerical issues with small numbers
-    log_lik = stats.norm.logpdf(data, loc=mean, scale=variance)
+    log_lik = stats.norm.logpdf(ys, loc=mean, scale=variance)
     return np.sum(log_lik)
 
-def log_prior(theta):
+def log_prior(theta) -> np.ndarray[tuple[int, ...], np.dtype[np.float64]]:
     """ 
     Evaluate the log-prior of the parameter vector theta.
     """
@@ -78,14 +82,13 @@ def log_prior(theta):
     return log_prior
 
 
-def log_posterior(data, theta):
+def log_posterior(data: np.ndarray, theta: np.ndarray) -> np.ndarray[tuple[int, ...], np.dtype[np.float64]]:
     return log_likelihood(data, theta) + log_prior(theta)
 
 
-def metropolis_hastings(data, theta, k, num_iterations):
+def metropolis_hastings(data: np.ndarray, k: float, num_iterations: int) -> np.ndarray[tuple[int, ...], np.dtype[np.float64]]:
     
-    thetas = np.zeros((num_iterations, 3))
-    thetas[0,:] = np.random.rand(3)
+    thetas = np.random.rand(3,1)
 
     for i in range(num_iterations):
         
