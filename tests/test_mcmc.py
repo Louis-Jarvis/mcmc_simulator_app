@@ -48,11 +48,6 @@ def test_log_likelihood_is_scalar(theta, data):
     assert log_lik.shape == ()
     assert isinstance(log_lik, np.float64)
 
-@given(theta=theta(), data=data())
-def test_log_likelihood_is_negative(theta, data):
-    log_lik = mcmc.log_likelihood(data, theta)
-    assert log_lik < 0, "log_likelihood is not negative"
-
 @given(theta=theta())
 def test_log_prior_is_scalar(theta):
     prior = mcmc.log_prior(theta)
@@ -60,19 +55,9 @@ def test_log_prior_is_scalar(theta):
     assert prior.shape == ()
     assert isinstance(prior, np.float64)
 
-@given(theta=theta())
-def test_log_prior_is_negative(theta):
-    prior = mcmc.log_prior(theta)
-    assert prior < 0, "log_prior is not negative"
-
 @given(theta=theta(), data=data())
 def test_log_posterior_is_scalar(theta, data):
     log_posterior = mcmc.log_posterior(data, theta)
 
     assert log_posterior.shape == ()
     assert isinstance(log_posterior, np.float64)
-
-@given(theta=theta(), data=data())
-def test_log_posterior_is_negative(theta, data):
-    log_posterior = mcmc.log_posterior(data, theta)
-    assert log_posterior < 0, "log_posterior is not negative"

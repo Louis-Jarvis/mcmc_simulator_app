@@ -1,30 +1,42 @@
 """Entrypoint for the application."""
 
+import pathlib
 import streamlit as st
 import numpy as np
 import pandas as pd
 import logging
-import pathlib
+from scipy import stats
+from app import plots, text, mcmc
 
-from app import plots
-from app.text import PROBLEM_DESCRIPTION, PROPOSAL_DISTRIBUTION_TEXT
+np.random.seed(42)
 
-NUM_ITERATIONS = 1000
+# Constants
+NUM_ITERATIONS = 2000
+K = 0.1
 
-# Generate data
-x = np.linspace(0, 10, NUM_ITERATIONS)
-y = np.sin(x) + np.random.normal(0, 0.1, NUM_ITERATIONS)
-
-logging.basicConfig(level=logging.INFO)  # TODO change
-logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+LOGGER = logging.getLogger(__name__)
 
 # Initialization
 if "running" not in st.session_state:
     st.session_state.running = False
     st.session_state.idx = 0
 
-if "trace_data" not in st.session_state:
-    st.session_state.trace_data = pd.DataFrame({"x": [], "y": []})
+if "thetas" not in st.session_state:
+    # Initialize thetas as a DataFrame with columns a, b, sigma
+    st.session_state.thetas = pd.DataFrame(
+        np.zeros((NUM_ITERATIONS, 3)),
+        columns=['a', 'b', 'sigma']
+    )
+
+@st.cache_data
+def load_data():
+    """Load data with caching."""
+    return np.genfromtxt(
+        pathlib.Path("data") / "synthetic_data.csv", 
+        delimiter=",", 
+        skip_header=True
+    )
 
 def start_button():
     st.session_state.running = True
@@ -34,40 +46,69 @@ def stop_button():
 
 def reset_button():
     st.session_state.idx = 0
-    st.session_state.trace_data = pd.DataFrame({"x": [], "y": []})
+    st.session_state.thetas = pd.DataFrame(
+        np.zeros((NUM_ITERATIONS, 3)),
+        columns=['a', 'b', 'sigma']
+    )
+
+def update_plots():
+    """Update all plots with current data."""
+    current_data = st.session_state.thetas.iloc[:st.session_state.idx+1]
+    if not current_data.empty:
+
+        trace_chart = plots.trace_plot(current_data)
+        trace_plot_a.altair_chart(trace_chart, use_container_width=True)
+        
+        # Update histograms
+        histogram_a = plots.histogram_plot(current_data, 'a', "Parameter a")
+        histogram_b = plots.histogram_plot(current_data, 'b', "Parameter b")
+        histogram_sigma = plots.histogram_plot(current_data, 'sigma', "Parameter σ")
+        
+        hist_a.altair_chart(histogram_a, use_container_width=True)
+        hist_b.altair_chart(histogram_b, use_container_width=True)
+        hist_sigma.altair_chart(histogram_sigma, use_container_width=True)
 
 def run_animation() -> None:
+    """Run the MCMC animation."""
+    data = load_data()
+    
+    # Initialize theta if starting fresh
+    if st.session_state.idx == 0:
+        initial_values = np.random.rand(3)
+        st.session_state.thetas.iloc[0] = initial_values
     
     while st.session_state.idx < NUM_ITERATIONS:
         if not st.session_state.running:
             break
 
-        logger.debug(f"Iteration {st.session_state.idx}")
-
-        st.session_state.trace_data = pd.concat([
-            st.session_state.trace_data, 
-            pd.DataFrame(data={
-                "x": x[st.session_state.idx], 
-                "y": y[st.session_state.idx]
-                }, 
-                index=[st.session_state.idx])],
-                ignore_index=True)
+        i = st.session_state.idx
         
-        trace_chart = plots.trace_plot(st.session_state.trace_data)
-        trace_plot_a.altair_chart(trace_chart, use_container_width=True)
-
-        #TODO replace this with the actual plots
-        # # Create Altair histogram styled like Seaborn with no gaps between bars
-        histogram = plots.histogram_plot(st.session_state.trace_data, 'y', "y")
-
-        # # Display the Altair histogram
-        hist_a.altair_chart(histogram, use_container_width=True)
-        hist_b.altair_chart(histogram, use_container_width=True)
-        hist_sigma.altair_chart(histogram, use_container_width=True)
-
+        # Get current theta as numpy array for MCMC calculations
+        current_theta = st.session_state.thetas.iloc[max(0, i-1)].values
+        
+        theta_prime = mcmc.propose_theta(current_theta, K)
+        
+        proposal_ratio = mcmc.proposal_ratio(current_theta, theta_prime, K)
+        
+        log_posterior_theta_prime = mcmc.log_posterior(data, theta_prime)
+        log_posterior_theta = mcmc.log_posterior(data, current_theta)
+        
+        log_acceptance_ratio = (log_posterior_theta_prime - log_posterior_theta) + proposal_ratio
+        
+        # Accept or reject the proposal
+        if np.log(stats.uniform().rvs(1)) < log_acceptance_ratio:
+            st.session_state.thetas.iloc[i] = theta_prime
+        else:
+            st.session_state.thetas.iloc[i] = current_theta
+        
+        # Update plots if they're uncommented
+        update_plots()
+        
         st.session_state.idx += 1
 
-# Sidebar controls
+# ---------------- #
+#     UI Layout    #
+#------------------#
 st.title("Bayesian Linear Regression with MCMC")
 st.sidebar.title("Inputs")
 
@@ -76,43 +117,41 @@ with st.sidebar:
     reset_button_ = st.empty()
 
     if not st.session_state.running and st.session_state.idx < NUM_ITERATIONS:
-        logger.debug("Starting")
         main_button.button("Start", on_click=start_button)
     else:
         main_button.button("Stop", on_click=stop_button)
     
     if not st.session_state.running and st.session_state.idx > 0:
-        logger.debug("Reset button")
         reset_button_.button("Reset", on_click=reset_button)
 
 # Main content
 col_1, col_2 = st.columns(2)
 
 with col_1:
-    st.markdown(PROBLEM_DESCRIPTION)
+    st.markdown(text.PROBLEM_DESCRIPTION)
 
 with col_2:
     st.image(pathlib.Path("assets") / "synthetic_data.png")
 
-st.markdown(PROPOSAL_DISTRIBUTION_TEXT)
+st.markdown(text.PROPOSAL_DISTRIBUTION_TEXT)
 
-# Run the simulation and display the plots
+# Display plots
 with st.container():
-    trace_plot_a = plots.show_trace_plot()
+    trace_plot_a = st.empty()
     
 with st.container():
     col_1, col_2, col3 = st.columns(3)
     with col_1:
-        hist_a = plots.show_histogram_plot('y')
+        hist_a = st.empty()
     with col_2:
-        hist_b = plots.show_histogram_plot('y')
+        hist_b = st.empty()
     with col3:
-        hist_sigma = plots.show_histogram_plot('y')
+        hist_sigma = st.empty()
 
-# Logic for the simulation
+# Run simulation
 with st.spinner("Running MCMC..."):
     run_animation()
 
-# on animation end
+# Update state on animation end
 st.session_state.running = False
-
+update_plots()
