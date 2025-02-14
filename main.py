@@ -72,8 +72,7 @@ def run_animation() -> None:
     
     # Initialize theta if starting fresh
     if st.session_state.idx == 0:
-        initial_values = np.random.rand(3)
-        st.session_state.thetas.iloc[0] = initial_values
+        st.session_state.thetas.iloc[0] = mcmc.generate_initial_theta()
     
     while st.session_state.idx < NUM_ITERATIONS:
         if not st.session_state.running:
