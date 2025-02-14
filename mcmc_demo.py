@@ -11,32 +11,25 @@ import numpy as np
 import scipy.stats as stats
 
 LOGGER = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
-np.random.seed(42)
+#np.random.seed(42)
 
 K = 3
 NUM_ITERATIONS = 100
 
-def generate_initial_theta():
-    theta = np.zeros((3,1))
-    theta[:2, 0] = stats.multivariate_normal(0,1).rvs(2)
-    theta[2, 0] = stats.gamma(a=1, scale=1).rvs(1)
-
-    return theta
-
-thetas = np.zeros((3, NUM_ITERATIONS))
-thetas[:,0] = generate_initial_theta()
-
-def update_data(a,b,sigma):
-    np.column_stack([thetas, np.array([a,b,sigma])])
-
 def metropolis_hastings(n):
+
+    acceptance_count = 0
+
+    thetas = np.zeros((3, NUM_ITERATIONS))
+    thetas[:,0] = mcmc.generate_initial_theta()
 
     data = np.genfromtxt(
         pathlib.Path("data") / "synthetic_data.csv", 
         delimiter=",", 
         skip_header=True
-        )
+    )
 
     for i in range(1, n):
 
@@ -53,12 +46,15 @@ def metropolis_hastings(n):
         
         # exponentiate the log acceptance ratio to obtain probability
         if np.log(stats.uniform().rvs(1)) < log_acceptance_ratio:
+
+            acceptance_count += 1
             LOGGER.debug("Acceptance ratio: %f", log_acceptance_ratio)
             LOGGER.debug(f"Accept theta_prime {theta_prime}")
             thetas[:,i] = theta_prime
         else:
             thetas[:,i] = thetas[:,i-1]
     
+    LOGGER.debug("Acceptance rate: %f", acceptance_count/n)
     return thetas
 
 def run_demo():
