@@ -31,7 +31,7 @@ def main():
         "y": y
     })
 
-    data.to_csv(DATA_FOLDER / "synthetic_data.csv")
+    data.to_csv(DATA_FOLDER / "synthetic_data.csv", index=False)
     sns.scatterplot(data=data, x="x", y="y")
     plt.savefig(ASSETS_FOLDER / "synthetic_data.png")
 
