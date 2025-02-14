@@ -15,22 +15,6 @@ def generate_initial_theta():
 
     return theta.flatten()
 
-# def proposal_ratio(theta: np.ndarray, theta_prime: np.ndarray, k: float) -> np.ndarray:
-#     """Likelihood of observing theta-prime given theta"""
-
-#     # what is the likelihood of observing the old parameters given the new parameters
-#     # this is the markov chain transition probability q(theta_prime|theta)
-#     q_theta_theta_prime = stats.multivariate_normal.logpdf(theta_prime, mean=theta[0], cov=np.eye(2)*k**2)
-
-#     # what is the likelihood of observing the new parameters given the old parameters
-#     # this is the markov chain transition probability q(theta|theta_prime)
-#     q_theta_prime_theta = stats.multivariate_normal.logpdf(theta, mean=theta_prime[0], cov=np.eye(2)*k**2)
-
-#     # the ratio of the two probabilities is the proposal ratio
-#     # we are adding them since we are working with log likelihoods
-
-#     return q_theta_theta_prime - q_theta_prime_theta
-
 
 def propose_theta(theta: np.ndarray, k: float) -> np.ndarray:
     """
@@ -51,7 +35,7 @@ def propose_theta(theta: np.ndarray, k: float) -> np.ndarray:
     
     return theta_prime
 
-def log_likelihood(data: np.ndarray, theta: np.ndarray) -> np.ndarray[tuple[int, ...], np.dtype[np.float64]]    :
+def log_likelihood(data: np.ndarray, theta: np.ndarray) -> np.float64:
     """ 
     Evaluate the likelhood of the data given a specific parameter vector.
     We are assuming the conditional distribution of the response Y|X is normal
@@ -66,10 +50,10 @@ def log_likelihood(data: np.ndarray, theta: np.ndarray) -> np.ndarray[tuple[int,
         
     # we use the log-likeihood so that we are summing instead of multiplying
     # this is to avoid numerical issues with small numbers
-    log_lik = stats.norm.logpdf(ys, loc=a + b*xs, scale=sigma)
+    log_lik = stats.norm.logpdf(ys, loc=a*xs + b, scale=sigma)
     return np.sum(log_lik)
 
-def log_prior(theta, sigma=100) -> np.ndarray[tuple[int, ...], np.dtype[np.float64]]:
+def log_prior(theta, sigma=100) -> np.float64:
     """ 
     Evaluate the log-prior of the parameter vector theta.
     """
@@ -85,7 +69,7 @@ def log_prior(theta, sigma=100) -> np.ndarray[tuple[int, ...], np.dtype[np.float
     return log_prior
 
 
-def log_posterior(data: np.ndarray, theta: np.ndarray) -> np.ndarray[tuple[int, ...], np.dtype[np.float64]]:
+def log_posterior(data: np.ndarray, theta: np.ndarray) -> np.float64:
     return log_likelihood(data, theta) + log_prior(theta)
 
 
