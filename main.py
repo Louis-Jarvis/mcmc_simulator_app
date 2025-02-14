@@ -15,17 +15,17 @@ K = 0.1
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 
-# Initialization
 if "running" not in st.session_state:
     st.session_state.running = False
     st.session_state.idx = 0
 
 if "thetas" not in st.session_state:
-    # Initialize thetas as a DataFrame with columns a, b, sigma
     st.session_state.thetas = pd.DataFrame(
         np.zeros((NUM_ITERATIONS, 3)),
         columns=['a', 'b', 'sigma']
     )
+
+    st.session_state.thetas.iloc[0] = mcmc.generate_initial_theta()
 
 @st.cache_data
 def load_data():
@@ -66,27 +66,18 @@ def update_plots():
         hist_b.altair_chart(histogram_b, use_container_width=True)
         hist_sigma.altair_chart(histogram_sigma, use_container_width=True)
 
-def run_animation() -> None:
+def run_animation(data: pd.DataFrame) -> None:
     """Run the MCMC animation."""
-    data = load_data()
-    
-    # Initialize theta if starting fresh
-    if st.session_state.idx == 0:
-        st.session_state.thetas.iloc[0] = mcmc.generate_initial_theta()
-    
-    while st.session_state.idx < NUM_ITERATIONS:
-        if not st.session_state.running:
-            break
 
-        i = st.session_state.idx
+    for i in range(st.session_state.idx, NUM_ITERATIONS):
+        if st.session_state.running is False:
+            break
         
-        # Get current theta as numpy array for MCMC calculations
         current_theta = st.session_state.thetas.iloc[max(0, i-1)].values
         
         theta_prime = mcmc.propose_theta(current_theta, K)
         
-        proposal_ratio = mcmc.proposal_ratio(current_theta, theta_prime, K)
-        
+        proposal_ratio = mcmc.proposal_ratio(current_theta, theta_prime, K)        
         log_posterior_theta_prime = mcmc.log_posterior(data, theta_prime)
         log_posterior_theta = mcmc.log_posterior(data, current_theta)
         
@@ -98,10 +89,9 @@ def run_animation() -> None:
         else:
             st.session_state.thetas.iloc[i] = current_theta
         
-        # Update plots if they're uncommented
         update_plots()
         
-        st.session_state.idx += 1
+        st.session_state.idx = i
 
 # ---------------- #
 #     UI Layout    #
@@ -145,9 +135,12 @@ with st.container():
     with col3:
         hist_sigma = st.empty()
 
+data = load_data()
+
+
 # Run simulation
 with st.spinner("Running MCMC..."):
-    run_animation()
+    run_animation(data)
 
 # Update state on animation end
 st.session_state.running = False
