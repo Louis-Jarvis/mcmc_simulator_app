@@ -48,10 +48,11 @@ def reset_button():
         np.zeros((NUM_ITERATIONS, 3)),
         columns=['a', 'b', 'sigma']
     )
+    st.session_state.thetas.iloc[0] = mcmc.generate_initial_theta()
+    LOGGER.info(f"Initial theta after reset: {st.session_state.thetas.iloc[0].values}")
 
-def update_plots():
+def update_plots(current_data):
     """Update all plots with current data."""
-    current_data = st.session_state.thetas.iloc[:st.session_state.idx+1]
     if not current_data.empty:
 
         trace_chart = plots.trace_plot(current_data)
@@ -89,7 +90,7 @@ def run_animation(data: pd.DataFrame) -> None:
         else:
             st.session_state.thetas.iloc[i] = current_theta
         
-        update_plots()
+        update_plots(st.session_state.thetas.iloc[:st.session_state.idx+1])
         
         st.session_state.idx = i
 
@@ -142,6 +143,4 @@ data = load_data()
 with st.spinner("Running MCMC..."):
     run_animation(data)
 
-# Update state on animation end
-st.session_state.running = False
-update_plots()
+update_plots(st.session_state.thetas.iloc[:st.session_state.idx+1])
