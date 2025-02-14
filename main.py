@@ -8,10 +8,8 @@ import logging
 from scipy import stats
 from app import plots, text, mcmc
 
-np.random.seed(42)
-
 # Constants
-NUM_ITERATIONS = 2000
+NUM_ITERATIONS = 10000
 K = 0.1
 
 logging.basicConfig(level=logging.INFO)
