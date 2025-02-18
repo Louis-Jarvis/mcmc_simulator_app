@@ -39,13 +39,13 @@ def load_data():
     )
 
 # Button callbacks
-def start_button():
+def start_animation():
     st.session_state.running = True
 
-def stop_button():
+def stop_animaion():
     st.session_state.running = False
 
-def reset_button():
+def reset_animation():
     st.session_state.idx = 0
     st.session_state.thetas = pd.DataFrame(
         np.zeros((NUM_ITERATIONS, 3)),
@@ -98,19 +98,6 @@ initialize_session_state()
 
 # UI Layout
 st.title("Bayesian Linear Regression with MCMC")
-st.sidebar.title("Inputs")
-
-with st.sidebar:
-    main_button = st.empty()
-    reset_button_ = st.empty()
-
-    if not st.session_state.running and st.session_state.idx < NUM_ITERATIONS:
-        main_button.button("Start", on_click=start_button)
-    else:
-        main_button.button("Stop", on_click=stop_button)
-    
-    if not st.session_state.running and st.session_state.idx > 0:
-        reset_button_.button("Reset", on_click=reset_button)
 
 # Main content
 col_1, col_2 = st.columns(2)
@@ -122,6 +109,18 @@ with col_2:
     st.image(pathlib.Path("assets") / "synthetic_data.png")
 
 st.markdown(text.PROPOSAL_DISTRIBUTION_TEXT)
+st.subheader("Run Animation")
+
+main_button = st.empty()
+reset_button = st.empty()
+
+if not st.session_state.running and st.session_state.idx < NUM_ITERATIONS:
+    main_button.button("Start", on_click=start_animation)
+else:
+    main_button.button("Stop", on_click=stop_animaion)
+
+if not st.session_state.running and st.session_state.idx > 0:
+    reset_button.button("Reset", on_click=reset_animation)
 
 # Display plots
 with st.container():
