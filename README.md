@@ -14,3 +14,8 @@ pipenv install
 ```bash
 streamlit run main.py
 ```
+
+If you want to generate new data, run the following command:
+```bash
+python scripts/generate_data.py
+```
