@@ -10,7 +10,10 @@ from app import plots, text, mcmc
 
 # Constants
 NUM_ITERATIONS = 10000
+BURN_IN = 1000
 K = 0.1
+
+st.set_page_config(layout="wide")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -93,6 +96,9 @@ def run_animation(data: pd.DataFrame):
         if i % 20 == 0 or i == NUM_ITERATIONS - 1:
             update_plots(st.session_state.thetas.iloc[:i+1])
 
+def summarise_params():
+    return st.session_state.thetas[:BURN_IN].agg(['mean', 'std'])
+
 # Initialize session state
 initialize_session_state()
 
@@ -109,18 +115,19 @@ with col_2:
     st.image(pathlib.Path("assets") / "synthetic_data.png")
 
 st.markdown(text.PROPOSAL_DISTRIBUTION_TEXT)
-st.subheader("Run Animation")
 
-main_button = st.empty()
-reset_button = st.empty()
+with st.sidebar:
+    st.subheader("Run Animation")
+    main_button = st.empty()
+    reset_button = st.empty()
 
-if not st.session_state.running and st.session_state.idx < NUM_ITERATIONS:
-    main_button.button("Start", on_click=start_animation)
-else:
-    main_button.button("Stop", on_click=stop_animaion)
+    if not st.session_state.running and st.session_state.idx < NUM_ITERATIONS:
+        main_button.button("Start", on_click=start_animation)
+    else:
+        main_button.button("Stop", on_click=stop_animaion)
 
-if not st.session_state.running and st.session_state.idx > 0:
-    reset_button.button("Reset", on_click=reset_animation)
+    if not st.session_state.running and st.session_state.idx > 0:
+        reset_button.button("Reset", on_click=reset_animation)
 
 # Display plots
 with st.container():
@@ -138,7 +145,12 @@ with st.container():
 # Load data and run simulation
 data = load_data()
 
-with st.spinner("Running MCMC..."):
-    run_animation(data)
+run_animation(data)
+
+if st.session_state.idx > BURN_IN:
+    st.subheader("Summary of parameters")
+    st.markdown("$N_{BurnIn} = %d$" % BURN_IN)
+    st.markdown("$N_{samples} = %d$" % (NUM_ITERATIONS))
+    st.write(summarise_params())
 
 update_plots(st.session_state.thetas.iloc[:st.session_state.idx+1])
