@@ -71,7 +71,7 @@ def run_animation(data: pd.DataFrame) -> None:
     """Run the MCMC animation."""
 
     for i in range(st.session_state.idx, NUM_ITERATIONS):
-        if st.session_state.running is False:
+        if not st.session_state.running:
             break
         
         current_theta = st.session_state.thetas.iloc[max(0, i-1)].values
@@ -90,9 +90,11 @@ def run_animation(data: pd.DataFrame) -> None:
         else:
             st.session_state.thetas.iloc[i] = current_theta
         
-        update_plots(st.session_state.thetas.iloc[:st.session_state.idx+1])
-        
         st.session_state.idx = i
+
+        # Update plots every 100 iterations to reduce overhead
+        if i % 20 == 0 or i == NUM_ITERATIONS - 1:
+            update_plots(st.session_state.thetas.iloc[:i+1])
 
 # ---------------- #
 #     UI Layout    #
