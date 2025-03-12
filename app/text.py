@@ -23,7 +23,6 @@ $$
 """
 
 PROPOSAL_DISTRIBUTION_TEXT = r"""
-## Proposal Distribution:
 Our proposal distribution is:
 
 For convenience we assume that a and b are independent and both normally distributed (iid).

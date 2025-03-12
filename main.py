@@ -8,10 +8,15 @@ import streamlit as st
 from scipy import stats
 from app import plots, text, mcmc
 
-# Constants
 NUM_ITERATIONS = 10000
 BURN_IN = 1000
 K = 0.1
+
+NUM_COLS_MAIN_CONTENT=2
+NUM_COLS_HISTOGRAMS=3
+PARAM_NAMES=['a', 'b', 'sigma']
+
+ASSET_PATH=pathlib.Path("assets") / "synthetic_data.png"
 
 st.set_page_config(layout="wide")
 
@@ -19,7 +24,6 @@ st.set_page_config(layout="wide")
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 
-# Initialize session state
 def initialize_session_state():
     if "running" not in st.session_state:
         st.session_state.running = False
@@ -28,11 +32,10 @@ def initialize_session_state():
     if "thetas" not in st.session_state:
         st.session_state.thetas = pd.DataFrame(
             np.zeros((NUM_ITERATIONS, 3)),
-            columns=['a', 'b', 'sigma']
+            columns=PARAM_NAMES
         )
         st.session_state.thetas.iloc[0] = mcmc.generate_initial_theta()
 
-# Load data with caching
 @st.cache_data
 def load_data():
     return np.genfromtxt(
@@ -41,24 +44,23 @@ def load_data():
         skip_header=True
     )
 
-# Button callbacks
 def start_animation():
     st.session_state.running = True
 
-def stop_animaion():
+def stop_animation():
     st.session_state.running = False
 
 def reset_animation():
     st.session_state.idx = 0
     st.session_state.thetas = pd.DataFrame(
         np.zeros((NUM_ITERATIONS, 3)),
-        columns=['a', 'b', 'sigma']
+        columns=PARAM_NAMES
     )
     st.session_state.thetas.iloc[0] = mcmc.generate_initial_theta()
     LOGGER.info(f"Initial theta after reset: {st.session_state.thetas.iloc[0].values}")
 
-# Update plots
 def update_plots(current_data):
+    """Update all plots with current data."""
     if not current_data.empty:
         trace_chart = plots.trace_plot(current_data)
         trace_plot_a.altair_chart(trace_chart, use_container_width=True)
@@ -71,8 +73,8 @@ def update_plots(current_data):
         hist_b.altair_chart(histogram_b, use_container_width=True)
         hist_sigma.altair_chart(histogram_sigma, use_container_width=True)
 
-# Run MCMC animation
-def run_animation(data: pd.DataFrame):
+def mcmc_animation_plots(data: pd.DataFrame):
+    """Run the MCMC animation."""
     for i in range(st.session_state.idx, NUM_ITERATIONS):
         if not st.session_state.running:
             break
@@ -86,7 +88,7 @@ def run_animation(data: pd.DataFrame):
         
         log_acceptance_ratio = (log_posterior_theta_prime - log_posterior_theta) + proposal_ratio
         
-        if np.log(stats.uniform().rvs(1)) < log_acceptance_ratio:
+        if np.log(stats.uniform().rvs()) < log_acceptance_ratio:
             st.session_state.thetas.iloc[i] = theta_prime
         else:
             st.session_state.thetas.iloc[i] = current_theta
@@ -96,45 +98,54 @@ def run_animation(data: pd.DataFrame):
         if i % 20 == 0 or i == NUM_ITERATIONS - 1:
             update_plots(st.session_state.thetas.iloc[:i+1])
 
-def summarise_params():
-    return st.session_state.thetas[:BURN_IN].agg(['mean', 'std'])
+def param_summary_section(thetas: pd.DataFrame):
+    st.subheader("Summary of parameters")
+    st.markdown("$N_{BurnIn} = %d$" % BURN_IN)
+    st.markdown("$N_{samples} = %d$" % NUM_ITERATIONS)
+    st.write(thetas.agg(['mean', 'std']))
 
-# Initialize session state
+def intro_content():
+    """Show main content of the application."""
+    st.title("Bayesian Linear Regression with MCMC")
+
+    col_1, col_2 = st.columns(NUM_COLS_MAIN_CONTENT)
+
+    with col_1:
+        st.markdown(text.PROBLEM_DESCRIPTION)
+
+    with col_2:
+        st.image(ASSET_PATH)
+
+    st.subheader("Proposal Distribution")
+    st.markdown(text.PROPOSAL_DISTRIBUTION_TEXT)
+
+def sidebar_animation_controls():
+    """Show sidebar with controls."""
+    with st.sidebar:
+        st.subheader("Run Animation")
+        main_button = st.empty()
+        reset_button = st.empty()
+
+        if not st.session_state.running and st.session_state.idx < NUM_ITERATIONS:
+            main_button.button("Start", on_click=start_animation)
+        else:
+            main_button.button("Stop", on_click=stop_animation)
+
+        if not st.session_state.running and st.session_state.idx > 0:
+            reset_button.button("Reset", on_click=reset_animation)
+
 initialize_session_state()
 
-# UI Layout
-st.title("Bayesian Linear Regression with MCMC")
-
-# Main content
-col_1, col_2 = st.columns(2)
-
-with col_1:
-    st.markdown(text.PROBLEM_DESCRIPTION)
-
-with col_2:
-    st.image(pathlib.Path("assets") / "synthetic_data.png")
-
-st.markdown(text.PROPOSAL_DISTRIBUTION_TEXT)
-
-with st.sidebar:
-    st.subheader("Run Animation")
-    main_button = st.empty()
-    reset_button = st.empty()
-
-    if not st.session_state.running and st.session_state.idx < NUM_ITERATIONS:
-        main_button.button("Start", on_click=start_animation)
-    else:
-        main_button.button("Stop", on_click=stop_animaion)
-
-    if not st.session_state.running and st.session_state.idx > 0:
-        reset_button.button("Reset", on_click=reset_animation)
+intro_content()
+sidebar_animation_controls()
 
 # Display plots
+st.subheader("MCMC Animation")
 with st.container():
     trace_plot_a = st.empty()
     
 with st.container():
-    col_1, col_2, col3 = st.columns(3)
+    col_1, col_2, col3 = st.columns(NUM_COLS_HISTOGRAMS)
     with col_1:
         hist_a = st.empty()
     with col_2:
@@ -142,15 +153,12 @@ with st.container():
     with col3:
         hist_sigma = st.empty()
 
-# Load data and run simulation
 data = load_data()
+mcmc_animation_plots(data)
 
-run_animation(data)
-
+# Discard the initial number of samples as this is when the 
+# chain is still settling down
 if st.session_state.idx > BURN_IN:
-    st.subheader("Summary of parameters")
-    st.markdown("$N_{BurnIn} = %d$" % BURN_IN)
-    st.markdown("$N_{samples} = %d$" % (NUM_ITERATIONS))
-    st.write(summarise_params())
+    param_summary_section(st.session_state.thetas[BURN_IN:])
 
 update_plots(st.session_state.thetas.iloc[:st.session_state.idx+1])
