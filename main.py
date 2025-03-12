@@ -36,17 +36,17 @@ def initialize_session_state():
 
 @st.cache_data
 def load_data():
-        return np.genfromtxt(
+    return np.genfromtxt(
         pathlib.Path("data") / "synthetic_data.csv", 
         delimiter=",", 
         skip_header=True
     )
 
 def start_animation():
-        st.session_state.running = True
+    st.session_state.running = True
 
 def stop_animation():
-        st.session_state.running = False
+    st.session_state.running = False
 
 def reset_animation():
     st.session_state.idx = 0

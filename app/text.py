@@ -1,3 +1,4 @@
+"""Description text for the application introduction, including latex."""
 
 PROBLEM_DESCRIPTION = r"""
 Here we are demonstrating a solution to a a regression problem using Bayesian Analysis.

@@ -1,3 +1,8 @@
+"""Core implementation of the Metropolis-Hastings algorithm for simple Bayesian linear regression.
+This is a direct implementation of the approach taken in this fantastic article:
+https://medium.com/@tinonucera/bayesian-linear-regression-from-scratch-a-metropolis-hastings-implementation-63526857f191
+"""
+
 import numpy as np
 import scipy.stats as stats
 
@@ -17,8 +22,7 @@ def generate_initial_theta():
 
 
 def propose_theta(theta: np.ndarray, k: float) -> np.ndarray:
-    """
-    Propose a new parameter value, theta_prime, given the current parameter vector theta.
+    """Propose a new parameter value, theta_prime, given the current parameter vector theta.
     where theta=[a,b,sigma]
     """
 
@@ -36,8 +40,7 @@ def propose_theta(theta: np.ndarray, k: float) -> np.ndarray:
     return theta_prime
 
 def log_likelihood(data: np.ndarray, theta: np.ndarray) -> np.float64:
-    """ 
-    Evaluate the likelhood of the data given a specific parameter vector.
+    """Evaluate the likelhood of the data given a specific parameter vector.
     We are assuming the conditional distribution of the response Y|X is normal
     with mean a + b*X and variance sigma^2.
     """
@@ -54,9 +57,7 @@ def log_likelihood(data: np.ndarray, theta: np.ndarray) -> np.float64:
     return np.sum(log_lik)
 
 def log_prior(theta, sigma=100) -> np.float64:
-    """ 
-    Evaluate the log-prior of the parameter vector theta.
-    """
+    """Evaluate the log-prior of the parameter vector theta."""
     # Similar to the proposal distriibution we will assume a normal prior for a and b
     # as well as a gamma prior for sigma
 
@@ -74,11 +75,10 @@ def log_posterior(data: np.ndarray, theta: np.ndarray) -> np.float64:
 
 
 def proposal_ratio(theta, theta_prime, k=10):
-    """
-    this is the proposal distribution ratio
-    first, we calculate of the pdf of the proposal distribution at the old value of theta with respect to the new 
-    value of theta. And then we do the exact opposite.
-    """
+    """Calculate the ratio of the proposal distribution at the old value of theta with respect to the new value of theta (prime)."""
+    # This is the proposal distribution ratio
+    # first, we calculate of the pdf of the proposal distribution at the old value of theta with respect to the new 
+    # value of theta. And then we do the exact opposite.
     prop_ratio = stats.multivariate_normal.logpdf(theta[:2],mean=theta_prime[:2], cov=np.eye(2)*k**2)
     prop_ratio += stats.gamma.logpdf(theta[2], a=theta_prime[2]*k*500, scale=1/(500*k))
     prop_ratio -= stats.multivariate_normal.logpdf(theta_prime[:2],mean=theta[:2], cov=np.eye(2)*k**2)
