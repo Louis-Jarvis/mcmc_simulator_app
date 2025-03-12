@@ -11,12 +11,10 @@ from app import plots, text, mcmc
 NUM_ITERATIONS = 10000
 BURN_IN = 1000
 K = 0.1
-
-NUM_COLS_MAIN_CONTENT=2
-NUM_COLS_HISTOGRAMS=3
-PARAM_NAMES=['a', 'b', 'sigma']
-
-ASSET_PATH=pathlib.Path("assets") / "synthetic_data.png"
+NUM_COLS_MAIN_CONTENT = 2
+NUM_COLS_HISTOGRAMS = 3
+PARAM_NAMES = ['a', 'b', 'sigma']
+EXAMPLE_IMG_PATH = pathlib.Path("assets") / "synthetic_data.png"
 
 st.set_page_config(layout="wide")
 
@@ -38,17 +36,17 @@ def initialize_session_state():
 
 @st.cache_data
 def load_data():
-    return np.genfromtxt(
+        return np.genfromtxt(
         pathlib.Path("data") / "synthetic_data.csv", 
         delimiter=",", 
         skip_header=True
     )
 
 def start_animation():
-    st.session_state.running = True
+        st.session_state.running = True
 
 def stop_animation():
-    st.session_state.running = False
+        st.session_state.running = False
 
 def reset_animation():
     st.session_state.idx = 0
@@ -74,7 +72,6 @@ def update_plots(current_data):
         hist_sigma.altair_chart(histogram_sigma, use_container_width=True)
 
 def mcmc_animation_plots(data: pd.DataFrame):
-    """Run the MCMC animation."""
     for i in range(st.session_state.idx, NUM_ITERATIONS):
         if not st.session_state.running:
             break
@@ -98,13 +95,13 @@ def mcmc_animation_plots(data: pd.DataFrame):
         if i % 20 == 0 or i == NUM_ITERATIONS - 1:
             update_plots(st.session_state.thetas.iloc[:i+1])
 
-def param_summary_section(thetas: pd.DataFrame):
+def show_param_summary(thetas: pd.DataFrame):
     st.subheader("Summary of parameters")
     st.markdown("$N_{BurnIn} = %d$" % BURN_IN)
     st.markdown("$N_{samples} = %d$" % NUM_ITERATIONS)
     st.write(thetas.agg(['mean', 'std']))
 
-def intro_content():
+def show_intro_content():
     """Show main content of the application."""
     st.title("Bayesian Linear Regression with MCMC")
 
@@ -114,12 +111,12 @@ def intro_content():
         st.markdown(text.PROBLEM_DESCRIPTION)
 
     with col_2:
-        st.image(ASSET_PATH)
+        st.image(EXAMPLE_IMG_PATH)
 
     st.subheader("Proposal Distribution")
     st.markdown(text.PROPOSAL_DISTRIBUTION_TEXT)
 
-def sidebar_animation_controls():
+def show_sidebar_controls():
     """Show sidebar with controls."""
     with st.sidebar:
         st.subheader("Run Animation")
@@ -136,8 +133,9 @@ def sidebar_animation_controls():
 
 initialize_session_state()
 
-intro_content()
-sidebar_animation_controls()
+# Show main content and sidebar
+show_intro_content()
+show_sidebar_controls()
 
 # Display plots
 st.subheader("MCMC Animation")
@@ -159,6 +157,7 @@ mcmc_animation_plots(data)
 # Discard the initial number of samples as this is when the 
 # chain is still settling down
 if st.session_state.idx > BURN_IN:
-    param_summary_section(st.session_state.thetas[BURN_IN:])
+    show_param_summary(st.session_state.thetas[BURN_IN:])
 
+# Update plots with current data, even if animation has stopped
 update_plots(st.session_state.thetas.iloc[:st.session_state.idx+1])
