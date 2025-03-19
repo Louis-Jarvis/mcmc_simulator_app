@@ -102,9 +102,9 @@ def show_param_summary(thetas: pd.DataFrame):
     st.write(thetas.agg(['mean', 'std']))
 
 def show_intro_content():
-    """Show main content of the application."""
-    st.title("Bayesian Linear Regression with MCMC")
+    """Show background content of the application."""
 
+    st.header("Background")
     col_1, col_2 = st.columns(NUM_COLS_MAIN_CONTENT)
 
     with col_1:
@@ -188,8 +188,7 @@ def show_sidebar_controls():
 
 initialize_session_state()
 
-# Show main content and sidebar
-show_intro_content()
+st.title("Bayesian Linear Regression with MCMC")
 show_sidebar_controls()
 
 # Display plots
@@ -206,6 +205,8 @@ with st.container():
     with col3:
         hist_sigma = st.empty()
 
+show_intro_content()
+
 data = load_data()
 mcmc_animation_plots(data)
 
@@ -216,3 +217,4 @@ if st.session_state.idx > BURN_IN:
 
 # Update plots with current data, even if animation has stopped
 update_plots(st.session_state.thetas.iloc[:st.session_state.idx+1])
+
