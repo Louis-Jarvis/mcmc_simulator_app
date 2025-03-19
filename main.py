@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 from scipy import stats
-from app import plots, text, mcmc
+from app import plots, mcmc
 
 NUM_ITERATIONS = 10000
 BURN_IN = 1000
@@ -108,13 +108,68 @@ def show_intro_content():
     col_1, col_2 = st.columns(NUM_COLS_MAIN_CONTENT)
 
     with col_1:
-        st.markdown(text.PROBLEM_DESCRIPTION)
+        st.markdown(
+            r"""
+            Here we are demonstrating a solution to a a regression problem using Bayesian Analysis.
+            $$
+
+            \hat{Y} = aX + b + \epsilon
+            $$
+
+            We assume:
+            $$
+            Y | X \sim N(aX + b, \sigma^2)
+            $$
+
+            We want to estimate the three parameters:
+            $$
+            \theta = 
+                \begin{pmatrix}
+                a \\
+                b \\
+                \sigma
+                \end{pmatrix}
+            $$
+            """)
 
     with col_2:
         st.image(EXAMPLE_IMG_PATH)
 
     st.subheader("Proposal Distribution")
-    st.markdown(text.PROPOSAL_DISTRIBUTION_TEXT)
+    st.markdown(
+        r"""
+        Our proposal distribution is:
+
+        For convenience we assume that a and b are independent and both normally distributed (iid).
+        $$
+
+        \begin{pmatrix}
+        a' \\
+        b' \\
+        \end{pmatrix}
+
+        = N
+
+        \begin{pmatrix}
+            \begin{pmatrix}
+            a \\
+            b \\
+        \end{pmatrix}
+        ,
+        \begin{pmatrix}
+        k^2 & 0 \\
+        0 & k^2 \\
+        \end{pmatrix}
+        \end{pmatrix}
+        $$
+
+        Because the standard deviation is non-negative, we will use the gamma distribution as our prior.
+        $$
+        \sigma' \sim \Gamma(\sigma k\omega, k\omega)
+        $$
+
+        We will use the Metropolis Hastings algorithm to estimate the parameters.
+        """)
 
 def show_sidebar_controls():
     """Show sidebar with controls."""
