@@ -37,3 +37,16 @@ If you want to generate new data, run the following command:
 ```bash
 python scripts/generate_data.py
 ```
+
+## Testing:
+This package uses [Tox](https://tox.readthedocs.io/en/latest/) to manage testing across multiple environments - see the [tox.ini file](tox.ini). Testing of the MCMC logic uses `pytest` and `hypothesis`.
+
+```bash
+# Example tox commands
+tox # run all
+tox -e py310 # test in python 3.10
+tox -e lint
+
+# Run tests alone
+pytest
+```
