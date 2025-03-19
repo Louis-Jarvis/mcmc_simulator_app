@@ -19,8 +19,12 @@ In this project I wanted to:
 
 ## Installation:
 ```bash
+# Setup for development
 pip install pipenv
-pipenv install
+pipenv install --dev
+
+# To run in virtualenv
+pipenv shell 
 ```
 
 ## Usage:
