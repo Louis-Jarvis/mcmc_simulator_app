@@ -42,6 +42,7 @@ def trace_plot(data: pd.DataFrame) -> alt.Chart:
     return trace_chart
 
 def histogram_plot(data: pd.DataFrame, variable: str, title: str, bins: int = 10) -> alt.Chart:
+    """Histogram of theta parameter."""
     histogram = alt.Chart(data).mark_bar(opacity=0.8, color='#81A1C1', binSpacing=0).encode(
         x=alt.X(f'{variable}:Q', title=variable).bin(maxbins=bins),  # Changed to ordinal type for binned data
         y=alt.Y("count()", title="Frequency")
@@ -49,12 +50,20 @@ def histogram_plot(data: pd.DataFrame, variable: str, title: str, bins: int = 10
         fill=SeabornPlotStyles.BACKGROUND_COLOR  # Background color
     ).configure_axis(
         grid=True,
-        gridColor=SeabornPlotStyles.AXIS_COLOR,  # Grid lines color
+        gridColor=SeabornPlotStyles.AXIS_COLOR,
         tickColor=SeabornPlotStyles.AXIS_LABEL_COLOR,
         labelColor=SeabornPlotStyles.AXIS_LABEL_COLOR
     )
 
     return histogram
+
+def plot_histogram_or_empty(current_data: pd.DataFrame, variable: str, title: str) -> None:
+    """Optionally plot a histogram of the thetas if there is data available. Ignoring the
+    the initial theta estimates."""
+    if len(current_data) > 1: # do not plot the initial theta estimates        
+        return histogram_plot(current_data, variable, title)
+    
+    return alt.Chart(pd.DataFrame()).mark_bar().encode()
 
 def show_trace_plot() -> None:
     return st.altair_chart(

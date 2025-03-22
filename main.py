@@ -62,14 +62,14 @@ def update_plots(current_data):
     if not current_data.empty:
         trace_chart = plots.trace_plot(current_data)
         trace_plot_a.altair_chart(trace_chart, use_container_width=True)
-        
-        histogram_a = plots.histogram_plot(current_data, 'a', "Parameter a")
-        histogram_b = plots.histogram_plot(current_data, 'b', "Parameter b")
-        histogram_sigma = plots.histogram_plot(current_data, 'sigma', "Parameter σ")
-        
-        hist_a.altair_chart(histogram_a, use_container_width=True)
-        hist_b.altair_chart(histogram_b, use_container_width=True)
-        hist_sigma.altair_chart(histogram_sigma, use_container_width=True)
+
+    histogram_a = plots.plot_histogram_or_empty(current_data, "a", "Parameter a")
+    histogram_b = plots.plot_histogram_or_empty(current_data, "b", "Parameter b")
+    histogram_sigma = plots.plot_histogram_or_empty(current_data, "sigma", "Parameter σ")
+
+    hist_a.altair_chart(histogram_a, use_container_width=True)
+    hist_b.altair_chart(histogram_b, use_container_width=True)
+    hist_sigma.altair_chart(histogram_sigma, use_container_width=True)    
 
 def mcmc_animation_plots(data: pd.DataFrame):
     for i in range(st.session_state.idx, NUM_ITERATIONS):
