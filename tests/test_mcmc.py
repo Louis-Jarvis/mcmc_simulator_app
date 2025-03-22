@@ -1,3 +1,5 @@
+"Tests for the mcmc module."
+
 import numpy as np
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
@@ -6,6 +8,7 @@ from app import mcmc
 
 @st.composite
 def theta(draw):
+    """Random array of parameters."""
     theta = draw(
         arrays(
             dtype=np.float64,
@@ -22,6 +25,7 @@ def theta(draw):
 
 @st.composite
 def data(draw):
+    """Random array of data."""
     return draw(
         arrays(
             dtype=np.float64, 
