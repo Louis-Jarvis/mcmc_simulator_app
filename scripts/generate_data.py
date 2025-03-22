@@ -3,9 +3,9 @@ Generate synthetic data for this problem.
 """
 import pathlib
 
-import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 
 DATA_FOLDER = pathlib.Path("data")

@@ -1,16 +1,17 @@
-"""Core implementation of the Metropolis-Hastings algorithm for simple Bayesian linear regression.
-This is a direct implementation of the approach taken in this fantastic article:
-https://medium.com/@tinonucera/bayesian-linear-regression-from-scratch-a-metropolis-hastings-implementation-63526857f191
+"""Core implementation of the Metropolis-Hastings algorithm for Bayesian Linear 
+Regression. This is a direct implementation of the approach taken in the Medium article 
+"Mastering Bayesian Linear Regression from Scratch" by Tino Nucera. 
+See README.md for more details.
 """
 
 import numpy as np
 import scipy.stats as stats
 
-
 NUM_PARAMETERS = 3
 
 # this is an extra parameter that helps to adjust the spread of the distribution
-# see here https://medium.com/@tinonucera/bayesian-linear-regression-from-scratch-a-metropolis-hastings-implementation-63526857f191
+# See here 
+# https://medium.com/@tinonucera/bayesian-linear-regression-from-scratch-a-metropolis-hastings-implementation-63526857f191
 OMEGA = 500 
 
 def generate_initial_theta():
@@ -22,8 +23,8 @@ def generate_initial_theta():
 
 
 def propose_theta(theta: np.ndarray, k: float) -> np.ndarray:
-    """Propose a new parameter value, theta_prime, given the current parameter vector theta.
-    where theta=[a,b,sigma]
+    """Propose a new parameter value, theta_prime, given the current parameter vector 
+    theta where theta=[a,b,sigma]
     """
 
     theta_prime = np.zeros(3)
@@ -32,7 +33,10 @@ def propose_theta(theta: np.ndarray, k: float) -> np.ndarray:
     previous_sigma = theta[2]
     
     # a and b - proposed based on the previous value of theta
-    theta_prime[0:2] = stats.multivariate_normal(mean=previous_a_b, cov=np.eye(2)*k**2).rvs(1)
+    theta_prime[0:2] = stats.multivariate_normal(
+        mean=previous_a_b, 
+        cov=np.eye(2)*k**2
+        ).rvs(1)
     
     # sigma
     theta_prime[2] = stats.gamma(a=previous_sigma*k*OMEGA, scale=1/(k*OMEGA)).rvs(1)
@@ -75,12 +79,21 @@ def log_posterior(data: np.ndarray, theta: np.ndarray) -> np.float64:
 
 
 def proposal_ratio(theta, theta_prime, k=10):
-    """Calculate the ratio of the proposal distribution at the old value of theta with respect to the new value of theta (prime)."""
+    """Calculate the ratio of the proposal distribution at the old value of theta with 
+    respect to the new value of theta (prime)."""
     # This is the proposal distribution ratio
-    # first, we calculate of the pdf of the proposal distribution at the old value of theta with respect to the new 
-    # value of theta. And then we do the exact opposite.
-    prop_ratio = stats.multivariate_normal.logpdf(theta[:2],mean=theta_prime[:2], cov=np.eye(2)*k**2)
+    # first, we calculate of the pdf of the proposal distribution at the old value of 
+    # theta with respect to the new value of theta. And then we do the exact opposite.
+    prop_ratio = stats.multivariate_normal.logpdf(
+        theta[:2],
+        mean=theta_prime[:2], 
+        cov=np.eye(2)*k**2
+        )
     prop_ratio += stats.gamma.logpdf(theta[2], a=theta_prime[2]*k*500, scale=1/(500*k))
-    prop_ratio -= stats.multivariate_normal.logpdf(theta_prime[:2],mean=theta[:2], cov=np.eye(2)*k**2)
+    prop_ratio -= stats.multivariate_normal.logpdf(
+        theta_prime[:2],
+        mean=theta[:2], 
+        cov=np.eye(2)*k**2
+        )
     prop_ratio -= stats.gamma.logpdf(theta_prime[2], a=theta[2]*k*500, scale=1/(500*k))
     return prop_ratio

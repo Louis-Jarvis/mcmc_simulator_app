@@ -7,6 +7,7 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
+
 class SeabornPlotStyles:
     """Collection of colours used by seaborn styles."""
     BACKGROUND_COLOR = "#EAEAF2"  # dark grey
@@ -41,11 +42,20 @@ def trace_plot(data: pd.DataFrame) -> alt.Chart:
 
     return trace_chart
 
-def histogram_plot(data: pd.DataFrame, variable: str, title: str, bins: int = 10) -> alt.Chart:
+def histogram_plot(
+        data: pd.DataFrame, 
+        variable: str, 
+        title: str, 
+        bins: int = 10
+        ) -> alt.Chart:
     """Histogram of theta parameter."""
-    histogram = alt.Chart(data).mark_bar(opacity=0.8, color='#81A1C1', binSpacing=0).encode(
-        x=alt.X(f'{variable}:Q', title=variable).bin(maxbins=bins),  # Changed to ordinal type for binned data
-        y=alt.Y("count()", title="Frequency")
+    histogram = alt.Chart(data).mark_bar(
+        opacity=0.8, 
+        color='#81A1C1', 
+        binSpacing=0
+        ).encode(
+            x=alt.X(f'{variable}:Q', title=variable).bin(maxbins=bins), 
+            y=alt.Y("count()", title="Frequency")
     ).properties(title=f"Distribution of {title}").configure_view(
         fill=SeabornPlotStyles.BACKGROUND_COLOR  # Background color
     ).configure_axis(
@@ -57,8 +67,11 @@ def histogram_plot(data: pd.DataFrame, variable: str, title: str, bins: int = 10
 
     return histogram
 
-def plot_histogram_or_empty(current_data: pd.DataFrame, variable: str, title: str) -> None:
-    """Optionally plot a histogram of the thetas if there is data available. Ignoring the
+def plot_histogram_or_empty(
+        current_data: pd.DataFrame, 
+        variable: str, 
+        title: str) -> None:
+    """Optionally plot a histogram of the thetas if there is data available. Ignoring 
     the initial theta estimates."""
     if len(current_data) > 1: # do not plot the initial theta estimates        
         return histogram_plot(current_data, variable, title)

@@ -1,12 +1,14 @@
 """Entrypoint for the application."""
 
-import pathlib
 import logging
+import pathlib
+
 import numpy as np
 import pandas as pd
 import streamlit as st
 from scipy import stats
-from app import plots, mcmc
+
+from app import mcmc, plots
 
 NUM_ITERATIONS = 10000
 BURN_IN = 1000
@@ -65,11 +67,11 @@ def update_plots(current_data):
 
     histogram_a = plots.plot_histogram_or_empty(current_data, "a", "Parameter a")
     histogram_b = plots.plot_histogram_or_empty(current_data, "b", "Parameter b")
-    histogram_sigma = plots.plot_histogram_or_empty(current_data, "sigma", "Parameter σ")
+    hist_sigma = plots.plot_histogram_or_empty(current_data, "sigma", "Parameter σ")
 
     hist_a.altair_chart(histogram_a, use_container_width=True)
     hist_b.altair_chart(histogram_b, use_container_width=True)
-    hist_sigma.altair_chart(histogram_sigma, use_container_width=True)    
+    hist_c.altair_chart(hist_sigma, use_container_width=True)    
 
 def mcmc_animation_plots(data: pd.DataFrame):
     for i in range(st.session_state.idx, NUM_ITERATIONS):
@@ -83,7 +85,8 @@ def mcmc_animation_plots(data: pd.DataFrame):
         log_posterior_theta_prime = mcmc.log_posterior(data, theta_prime)
         log_posterior_theta = mcmc.log_posterior(data, current_theta)
         
-        log_acceptance_ratio = (log_posterior_theta_prime - log_posterior_theta) + proposal_ratio
+        log_acceptance_ratio = (log_posterior_theta_prime - log_posterior_theta) 
+        log_acceptance_ratio += proposal_ratio
         
         if np.log(stats.uniform().rvs()) < log_acceptance_ratio:
             st.session_state.thetas.iloc[i] = theta_prime
@@ -110,7 +113,8 @@ def show_intro_content():
     with col_1:
         st.markdown(
             r"""
-            Here we are demonstrating a solution to a a regression problem using Bayesian Analysis.
+            Here we are demonstrating a solution to a a regression problem using 
+            Bayesian Analysis.
             $$
 
             \hat{Y} = aX + b + \epsilon
@@ -140,7 +144,8 @@ def show_intro_content():
         r"""
         Our proposal distribution is:
 
-        For convenience we assume that a and b are independent and both normally distributed (iid).
+        For convenience we assume that a and b are independent and both normally 
+        distributed (iid).
         $$
 
         \begin{pmatrix}
@@ -163,7 +168,8 @@ def show_intro_content():
         \end{pmatrix}
         $$
 
-        Because the standard deviation is non-negative, we will use the gamma distribution as our prior.
+        Because the standard deviation is non-negative, we will use the gamma 
+        distribution as our prior.
         $$
         \sigma' \sim \Gamma(\sigma k\omega, k\omega)
         $$
@@ -203,7 +209,7 @@ with st.container():
     with col_2:
         hist_b = st.empty()
     with col3:
-        hist_sigma = st.empty()
+        hist_c = st.empty()
 
 show_intro_content()
 
