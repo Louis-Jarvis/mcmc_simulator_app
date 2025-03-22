@@ -113,7 +113,76 @@ def show_intro_content():
     with col_1:
         st.markdown(
             r"""
-            Here we are demonstrating a solution to a a regression problem using 
+            ### Markov Chain Monte Carlo
+            Markov Chain Monte Carlo is a technique that estimates difficult to compute 
+            integrals (our Posterior)
+            by sampling from a known (easier) distribution. We then reject or accept 
+            these samples (allowing for a mixture of exploration or exploitation).
+
+            Generally we look to estimate the Posterior $P(\theta|y)$ from the 
+            Likelihood $L(\theta | y)$ and Prior, $P(\theta)$.
+            Computing the exact integral (with the evidence term $P(y)$) is often 
+            intractable (although not necessarily in this case).
+            So we often work with the following expression:
+
+            $$
+            P(\theta | y) \propto  L(\theta | y) \cdot P(\theta). 
+            $$
+
+            ### Detailed Balance
+            The Markov Chain, *under certain conditions*, is guaranteed to converge 
+            towards $P(\theta|y)$.
+            And this relies on a concept known as the **detailed balance condition**. 
+            This requires that the likelihood of the chain.
+
+            $$
+            P(\theta)q(\theta \rightarrow \theta') = 
+            P(\theta')q(\theta' \rightarrow \theta)
+            $$
+
+            Where $q(\theta \rightarrow \theta')$ represents the probability of 
+            transitioning to state $\theta'$ given you are currently in state $\theta$.
+            This is known as the **proposal distribution**.
+            
+            Because we are cheating by not taking samples from our posterior 
+            distribution, there needs to be some decision criteria to accept or reject 
+            these samples. There is a possibility that we will not converge if we 
+            accept all samples from our proposal distribution, which leads to this
+            situation:
+
+            $$
+            P(\theta)q(\theta \rightarrow \theta') > 
+            P(\theta')q(\theta' \rightarrow \theta)
+            $$
+
+            I.e. the chain does not stay in the stationary distribution.
+            
+            Lets define our acceptance ratio $A$ such that:
+            $$
+            P(\theta)q(\theta \rightarrow \theta') 
+            \mathbf{A(\theta \rightarrow \theta')} = 
+            P(\theta')q(\theta' \rightarrow \theta)
+            $$
+
+            To maximize exploration, we explore the entire space, but we also want to 
+            exploit the regions of high probability.
+            To this end we will accept the sample with probability:
+            $$
+            \mathbf{A(\theta \rightarrow \theta')} = \min 
+            \left( 1, \frac{P(\theta')q(\theta' \rightarrow \theta)}{
+            P(\theta)q(\theta \rightarrow \theta')} \right)
+            $$
+
+            This ensures that we are always moving towards regions of high probability,
+            and that the chain will converge to the stationary distribution.
+            """
+            )
+
+    with col_2:
+        st.write(
+            r"""
+            ### Bayesian Linear Regression
+            Here we are demonstrating a solution to a regression problem using 
             Bayesian Analysis.
             $$
 
@@ -135,47 +204,58 @@ def show_intro_content():
                 \end{pmatrix}
             $$
             """)
-
-    with col_2:
+        
+        # noqa: EL05
+        link_text = """
+        Credit to [Medium article from Fortunato Nucera](https://medium.com/@tinonucera/bayesian-linear-regression-from-scratch-a-metropolis-hastings-implementation-63526857f191) 
+        for giving an excellent tutorial on how to implement 
+        Bayesian Linear Regression from scratch.
+        """
+        st.markdown(link_text)
+        
+        st.write("""Below is a synthetic linear regression dataset that was generated 
+                 by `scripts/generate_data.py`""")
         st.image(EXAMPLE_IMG_PATH)
 
-    st.subheader("Proposal Distribution")
-    st.markdown(
-        r"""
-        Our proposal distribution is:
+        st.subheader("Proposal Distribution")
+        st.markdown(
+            r"""
+            Our proposal distribution is:
 
-        For convenience we assume that a and b are independent and both normally 
-        distributed (iid).
-        $$
+            For convenience we assume that a and b are independent and both normally 
+            distributed (iid).
+            $$
 
-        \begin{pmatrix}
-        a' \\
-        b' \\
-        \end{pmatrix}
-
-        = N
-
-        \begin{pmatrix}
             \begin{pmatrix}
-            a \\
-            b \\
-        \end{pmatrix}
-        ,
-        \begin{pmatrix}
-        k^2 & 0 \\
-        0 & k^2 \\
-        \end{pmatrix}
-        \end{pmatrix}
-        $$
+            a' \\
+            b' \\
+            \end{pmatrix}
 
-        Because the standard deviation is non-negative, we will use the gamma 
-        distribution as our prior.
-        $$
-        \sigma' \sim \Gamma(\sigma k\omega, k\omega)
-        $$
+            = N
 
-        We will use the Metropolis Hastings algorithm to estimate the parameters.
-        """)
+            \begin{pmatrix}
+                \begin{pmatrix}
+                a \\
+                b \\
+            \end{pmatrix}
+            ,
+            \begin{pmatrix}
+            k^2 & 0 \\
+            0 & k^2 \\
+            \end{pmatrix}
+            \end{pmatrix}
+            $$
+
+            Because the standard deviation is non-negative, we will use the gamma 
+            distribution as our prior.
+            $$
+            \sigma' \sim \Gamma(\sigma k\omega, k\omega)
+            $$
+
+            $k$ defines the search width - i.e. how far we are willing to explore.
+
+            We will use the Metropolis Hastings algorithm to estimate the parameters.
+            """)
 
 def show_sidebar_controls():
     """Show sidebar with controls."""
