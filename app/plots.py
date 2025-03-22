@@ -5,7 +5,6 @@ The seaborn style was not available so it had to be applied manually.
 
 import altair as alt
 import pandas as pd
-import streamlit as st
 
 
 class SeabornPlotStyles:
@@ -77,15 +76,3 @@ def plot_histogram_or_empty(
         return histogram_plot(current_data, variable, title)
     
     return alt.Chart(pd.DataFrame()).mark_bar().encode()
-
-def show_trace_plot() -> None:
-    return st.altair_chart(
-        altair_chart=trace_plot(st.session_state.trace_data), 
-        use_container_width=True
-    )
-
-def show_histogram_plot(param: str) -> None:
-    return st.altair_chart(
-        altair_chart=histogram_plot(st.session_state.trace_data, param, param), 
-        use_container_width=True
-    )
